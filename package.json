@@ -1,0 +1,27 @@
+{
+  "name": "frontend-test",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "Private",
+  "private": true,
+  "scripts": {
+    "postinstall": "rm -Rf .psc-package && $(yarn bin)/psc-package install",
+    "clean": "rm -Rf .pulp-cache dist output",
+    "pscid:build": "$(yarn bin)/pulp build",
+    "build": "yarn clean && $(yarn bin)/pulp browserify",
+    "serve": "$(yarn bin)/pulp --watch browserify",
+    "id": "$(yarn bin)/pscid",
+    "test": "$(yarn bin)/pulp test"
+  },
+  "devDependencies": {
+    "psc-package": "^0.3.2",
+    "pscid": "^2.6.0",
+    "pulp": "^12.3.0",
+    "purescript": "^0.12.0",
+    "purescript-psa": "^0.7.3"
+  },
+  "dependencies": {
+    "react": "^16.6.0",
+    "react-dom": "^16.6.0"
+  }
+}
