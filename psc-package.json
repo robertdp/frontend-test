@@ -11,6 +11,7 @@
     "transformers",
     "react-basic",
     "effect",
-    "prelude"
+    "prelude",
+    "console"
   ]
 }
