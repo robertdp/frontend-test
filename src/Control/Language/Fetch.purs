@@ -9,4 +9,5 @@ class Monad r <= MonadFetch a b r | b -> a where
 
 data FetchError
   = NotFound
-  | Invalid String
+  | FailedDecode String
+  | UnexpectedStatus Int
