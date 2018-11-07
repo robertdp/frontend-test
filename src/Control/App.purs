@@ -24,5 +24,5 @@ derive newtype instance monadAffApp :: MonadAff App
 derive newtype instance monadAskApp :: MonadAsk Config App
 derive newtype instance monadReaderApp :: MonadReader Config App
 
-instance monadFetchSalesApp :: MonadFetch (Array Sale) App where
+instance monadFetchSalesApp :: MonadFetch Unit (Array Sale) App where
   fetch _ = pure $ pure $ []
