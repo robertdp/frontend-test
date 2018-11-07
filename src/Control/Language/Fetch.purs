@@ -1,10 +1,12 @@
 module Control.Language.Fetch where
 
 import Prelude
-import Data.Maybe (Maybe)
-import Foreign.Class (class Decode)
-import Type.Proxy (Proxy)
+import Network.RemoteData (RemoteData)
 
 
-class (Monad r, Decode a) <= MonadFetch a r where
-  fetch :: Proxy a -> r (Maybe a)
+class Monad r <= MonadFetch a b r | b -> a where
+  fetch :: a -> r (RemoteData FetchError b)
+
+data FetchError
+  = NotFound
+  | Invalid String
