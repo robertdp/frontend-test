@@ -6,14 +6,15 @@
   "private": true,
   "scripts": {
     "postinstall": "rm -Rf .psc-package && $(yarn bin)/psc-package install",
-    "clean": "rm -Rf .pulp-cache dist output",
+    "clean": "rm -Rf .pulp-cache dist output dce-output",
     "pscid:build": "$(yarn bin)/pulp build",
-    "build": "yarn clean && $(yarn bin)/pulp browserify",
-    "serve": "$(yarn bin)/pulp --watch browserify",
+    "build": "yarn clean && $(yarn bin)/pulp build -- --codegen corefn && zephyr --dce-foreign Main.main && $(yarn bin)/parcel build index.html --experimental-scope-hoisting",
+    "serve": "$(yarn bin)/pulp --watch build & $(yarn bin)/parcel index.html --open",
     "id": "$(yarn bin)/pscid",
     "test": "$(yarn bin)/pulp test"
   },
   "devDependencies": {
+    "parcel-bundler": "^1.10.3",
     "psc-package": "^0.3.2",
     "pscid": "^2.6.0",
     "pulp": "^12.3.0",
@@ -21,7 +22,7 @@
     "purescript-psa": "^0.7.3"
   },
   "dependencies": {
-    "react": "^16.6.0",
-    "react-dom": "^16.6.0"
+    "react": "^16.6.1",
+    "react-dom": "^16.6.1"
   }
 }
