@@ -6,7 +6,6 @@
 /generated-docs/
 /.psc-package/
 /dce-output/
-/dist/
 /.psc*
 /.purs*
 /.psa*
