@@ -25,13 +25,13 @@ instance decodeFavoriteSales :: Decode FavoriteSales where
   decode = decode >>> map fromArray
     where
       fromArray :: Array SaleId -> FavoriteSales
-      fromArray = Set.fromFoldable >>> FavoriteSales
+      fromArray = Set.fromFoldable >>> Newtype.wrap
 
 instance encodeFavoriteSales :: Encode FavoriteSales where
   encode = toArray >>> encode
     where
       toArray :: FavoriteSales -> Array SaleId
-      toArray (FavoriteSales set) = Set.toUnfoldable set
+      toArray = Newtype.unwrap >>> Set.toUnfoldable
 
 empty :: FavoriteSales
 empty = FavoriteSales Set.empty
