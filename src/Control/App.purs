@@ -65,16 +65,16 @@ instance monadFetchSalesApp :: MonadFetch Unit (Array Sale) App where
         UnexpectedStatus status
           # Left
 
-withLocalStorage :: forall m a. MonadEffect m => (Storage -> m a) -> m a
-withLocalStorage f = do
-  localStorage <- liftEffect $ Window.localStorage =<< window
+withLocalStorage :: forall m a. MonadEffect m => (Storage -> Effect a) -> m a
+withLocalStorage f = liftEffect do
+  localStorage <- Window.localStorage =<< window
   f localStorage
 
 instance monadStorageFavoriteSalesApp :: MonadStorage FavoriteSales App where
-  store favs = withLocalStorage $ liftEffect <<< Storage.setItem "favoriteSales" (encodeJSON favs)
+  store favs = withLocalStorage $ Storage.setItem "favoriteSales" (encodeJSON favs)
 
   retrieve = do
-    json <- withLocalStorage $ liftEffect <<< Storage.getItem "favoriteSales"
+    json <- withLocalStorage $ Storage.getItem "favoriteSales"
     pure $ decode json
     where
       decode :: Maybe String -> FavoriteSales
