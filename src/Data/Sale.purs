@@ -28,14 +28,3 @@ derive instance genericSaleId :: Generic SaleId _
 
 instance decodeSaleId :: Decode SaleId where
   decode = genericDecode $ defaultOptions { unwrapSingleConstructors = true }
-
-newtype SaleKey = SaleKey String
-
-derive newtype instance eqSaleKey :: Eq SaleKey
-
-derive instance genericSaleKey :: Generic SaleKey _
-
-instance decodeSaleKey :: Decode SaleKey where
-  decode = genericDecode $ defaultOptions { unwrapSingleConstructors = true }
-
-
