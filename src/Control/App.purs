@@ -9,13 +9,12 @@ import Control.Language.Fetch (class MonadFetch, FetchError(..))
 import Control.Monad.Except (runExcept)
 import Control.Monad.Reader (class MonadAsk, class MonadReader, ReaderT, ask)
 import Data.Bifunctor (bimap)
-import Data.Either (Either(..), either, hush)
+import Data.Either (Either(..))
 import Data.Sale (Sale)
 import Effect.Aff (Aff)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
 import Foreign.Generic (decodeJSON)
-import Network.RemoteData (RemoteData(..), fromEither)
 
 
 newtype Config = Config { baseURL :: String }
@@ -36,18 +35,16 @@ instance monadFetchSalesApp :: MonadFetch Unit (Array Sale) App where
   fetch _ = do
     Config { baseURL } <- ask
     res <- liftAff $ Affjax.get ResponseFormat.string $ baseURL <> "/sales.json"
-    case res.status, res.body of
+    pure $ case res.status, res.body of
       StatusCode 200, Right body ->
-        body
-          # decodeJSON
+        decodeJSON body
           # runExcept
           # bimap (FailedDecode <<< show) identity
-          # fromEither
-          # pure
+      _, Left error ->
+        Affjax.printResponseFormatError error
+          # FailedDecode
+          # Left
       StatusCode status, _ ->
-        status
-          # UnexpectedStatus
-          # Failure
-          # pure
-
+        UnexpectedStatus status
+          # Left
 
