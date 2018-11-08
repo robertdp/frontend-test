@@ -22,3 +22,5 @@ instance encodeFavoriteSales :: Encode FavoriteSales where
       toArray :: FavoriteSales -> Array SaleId
       toArray (FavoriteSales set) = Set.toUnfoldable set
 
+empty :: FavoriteSales
+empty = FavoriteSales Set.empty
