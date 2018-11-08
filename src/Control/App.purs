@@ -6,16 +6,24 @@ import Affjax as Affjax
 import Affjax.ResponseFormat as ResponseFormat
 import Affjax.StatusCode (StatusCode(..))
 import Control.Language.Fetch (class MonadFetch, FetchError(..))
+import Control.Language.Storage (class MonadStorage)
 import Control.Monad.Except (runExcept)
 import Control.Monad.Reader (class MonadAsk, class MonadReader, ReaderT, ask, runReaderT)
 import Data.Bifunctor (bimap)
-import Data.Either (Either(..))
+import Data.Either (Either(..), hush)
+import Data.Maybe (Maybe, fromMaybe, maybe)
 import Data.Sale (Sale)
+import Data.Sale.Favorites (FavoriteSales(..))
+import Data.Sale.Favorites as Favorites
+import Data.Set as Set
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Aff.Class (class MonadAff, liftAff)
-import Effect.Class (class MonadEffect)
-import Foreign.Generic (decodeJSON)
+import Effect.Class (class MonadEffect, liftEffect)
+import Foreign.Generic (decodeJSON, encodeJSON)
+import Web.HTML (window)
+import Web.HTML.Window as Window
+import Web.Storage.Storage as Storage
 
 
 newtype Config = Config { baseURL :: String }
@@ -32,8 +40,8 @@ derive newtype instance monadAffApp :: MonadAff App
 derive newtype instance monadAskApp :: MonadAsk Config App
 derive newtype instance monadReaderApp :: MonadReader Config App
 
-launch :: forall a. App a -> Config -> Effect Unit
-launch (App app) = launchAff_ <<< runReaderT app
+run :: forall a. Config -> App a -> Effect Unit
+run config (App app) = launchAff_ $ runReaderT app config
 
 instance monadFetchSalesApp :: MonadFetch Unit (Array Sale) App where
   fetch _ = do
@@ -54,3 +62,20 @@ instance monadFetchSalesApp :: MonadFetch Unit (Array Sale) App where
         UnexpectedStatus status
           # Left
 
+instance monadStorageFavoriteSalesApp :: MonadStorage FavoriteSales App where
+  store favs = do
+    localStorage <- liftEffect $ Window.localStorage =<< window
+    liftEffect $ Storage.setItem "favoriteSales" (encodeJSON favs) localStorage
+
+  retrieve = do
+    localStorage <- liftEffect $ Window.localStorage =<< window
+    json <- liftEffect $ Storage.getItem "favoriteSales" localStorage
+    pure $ decode json
+    where
+      decode :: Maybe String -> FavoriteSales
+      decode value =
+        value
+          >>= decodeJSON
+          >>> runExcept
+          >>> hush
+            # fromMaybe Favorites.empty

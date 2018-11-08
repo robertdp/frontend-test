@@ -1,7 +1,6 @@
 module Data.Sale where
 
 import Prelude
-
 import Data.Generic.Rep (class Generic)
 import Data.Sale.Image (SaleImage)
 import Foreign.Class (class Decode, class Encode)
