@@ -11,3 +11,4 @@ data FetchError
   = NotFound
   | FailedDecode String
   | UnexpectedStatus Int
+  | UnexpectedFormat String

@@ -7,11 +7,12 @@ import Affjax.ResponseFormat as ResponseFormat
 import Affjax.StatusCode (StatusCode(..))
 import Control.Language.Fetch (class MonadFetch, FetchError(..))
 import Control.Monad.Except (runExcept)
-import Control.Monad.Reader (class MonadAsk, class MonadReader, ReaderT, ask)
+import Control.Monad.Reader (class MonadAsk, class MonadReader, ReaderT, ask, runReaderT)
 import Data.Bifunctor (bimap)
 import Data.Either (Either(..))
 import Data.Sale (Sale)
-import Effect.Aff (Aff)
+import Effect (Effect)
+import Effect.Aff (Aff, launchAff_)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect)
 import Foreign.Generic (decodeJSON)
@@ -31,6 +32,9 @@ derive newtype instance monadAffApp :: MonadAff App
 derive newtype instance monadAskApp :: MonadAsk Config App
 derive newtype instance monadReaderApp :: MonadReader Config App
 
+launch :: forall a. App a -> Config -> Effect Unit
+launch (App app) = launchAff_ <<< runReaderT app
+
 instance monadFetchSalesApp :: MonadFetch Unit (Array Sale) App where
   fetch _ = do
     Config { baseURL } <- ask
@@ -40,9 +44,11 @@ instance monadFetchSalesApp :: MonadFetch Unit (Array Sale) App where
         decodeJSON body
           # runExcept
           # bimap (FailedDecode <<< show) identity
+      StatusCode 404, _ ->
+        Left NotFound
       _, Left error ->
         Affjax.printResponseFormatError error
-          # FailedDecode
+          # UnexpectedFormat
           # Left
       StatusCode status, _ ->
         UnexpectedStatus status
