@@ -20,7 +20,8 @@ config = Config { baseURL: "/data" }
 
 main :: Effect Unit
 main = do
-  container <- getElementById "app" =<< (map toNonElementParentNode $ Window.document =<< window)
+  document <- Window.document =<< window
+  container <- getElementById "app" $ toNonElementParentNode document
   case container of
     Nothing -> throw "Container element not found."
     Just c  ->
