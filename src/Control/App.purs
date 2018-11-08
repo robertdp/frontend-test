@@ -9,7 +9,7 @@ import Control.Language.Fetch (class MonadFetch, FetchError(..))
 import Control.Language.Storage (class MonadStorage)
 import Control.Monad.Except (runExcept)
 import Control.Monad.Reader (class MonadAsk, class MonadReader, ReaderT, ask, runReaderT)
-import Data.Bifunctor (bimap)
+import Data.Bifunctor (lmap)
 import Data.Either (Either(..), hush)
 import Data.Maybe (Maybe, fromMaybe)
 import Data.Sale (Sale)
@@ -51,7 +51,7 @@ instance monadFetchSalesApp :: MonadFetch Unit (Array Sale) App where
       StatusCode 200, Right body ->
         decodeJSON body
           # runExcept
-          # bimap (FailedDecode <<< show) identity
+          # lmap (FailedDecode <<< show)
 
       StatusCode 404, _ ->
         Left NotFound
