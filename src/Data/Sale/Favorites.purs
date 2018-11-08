@@ -2,7 +2,6 @@ module Data.Sale.Favorites where
 
 import Prelude
 
-import Data.Generic.Rep (class Generic)
 import Data.Sale (SaleId)
 import Data.Set (Set)
 import Data.Set as Set
@@ -10,8 +9,6 @@ import Foreign.Class (class Decode, class Encode, decode, encode)
 
 
 newtype FavoriteSales = FavoriteSales (Set SaleId)
-
-derive instance genericFavoriteSales :: Generic FavoriteSales _
 
 instance decodeFavoriteSales :: Decode FavoriteSales where
   decode = decode >>> map fromArray
