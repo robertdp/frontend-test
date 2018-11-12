@@ -7,19 +7,21 @@ import Affjax.ResponseFormat as ResponseFormat
 import Affjax.StatusCode (StatusCode(..))
 import Control.Language.Fetch (class MonadFetch, FetchError(..))
 import Control.Language.Storage (class MonadStorage)
-import Control.Monad.Except (runExcept)
+import Control.Language.Time (class MonadTime)
+import Control.Monad.Except (runExcept, throwError)
 import Control.Monad.Reader (class MonadAsk, class MonadReader, ReaderT, ask, runReaderT)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..), hush)
-import Data.Maybe (Maybe, fromMaybe)
-import Data.Sale (Sale)
-import Data.Sale.Favorites (FavoriteSales)
-import Data.Sale.Favorites as Favorites
+import Data.FavoriteSales (FavoriteSales)
+import Data.FavoriteSales as FavoriteSales
+import Data.JSDate as JSDate
+import Data.Maybe (Maybe, fromJust, fromMaybe)
 import Effect (Effect)
 import Effect.Aff (Aff, launchAff_)
 import Effect.Aff.Class (class MonadAff, liftAff)
 import Effect.Class (class MonadEffect, liftEffect)
 import Foreign.Generic (decodeJSON, encodeJSON)
+import Partial.Unsafe (unsafePartial)
 import Web.HTML (window)
 import Web.HTML.Window as Window
 import Web.Storage.Storage (Storage)
@@ -43,27 +45,29 @@ derive newtype instance monadReaderApp :: MonadReader Config App
 run :: forall a. Config -> App a -> Effect Unit
 run config (App app) = launchAff_ $ runReaderT app config
 
-instance monadFetchSalesApp :: MonadFetch Unit (Array Sale) App where
-  fetch _ = do
+instance monadFetchSalesApp :: MonadFetch App where
+  fetch url = do
     Config { baseURL } <- ask
-    res <- liftAff $ Affjax.get ResponseFormat.string $ baseURL <> "/sales.json"
-    pure $ case res.status, res.body of
+    res <- liftAff $ Affjax.get ResponseFormat.string $ baseURL <> url
+    pure case res.status, res.body of
       StatusCode 200, Right body ->
-        decodeJSON body
-          # runExcept
-          # lmap (FailedDecode <<< show)
+        handleDecode body
+
+      StatusCode 304, Right body ->
+        handleDecode body
 
       StatusCode 404, _ ->
         Left NotFound
 
       _, Left error ->
-        Affjax.printResponseFormatError error
-          # UnexpectedFormat
-          # Left
+        throwError $ UnexpectedFormat $ Affjax.printResponseFormatError error
 
       StatusCode status, _ ->
-        UnexpectedStatus status
-          # Left
+        Left $ UnexpectedStatus status
+
+    where
+      handleDecode = decodeJSON >>> runExcept >>> lmap (FailedDecode <<< show)
+
 
 withLocalStorage :: forall m a. MonadEffect m => (Storage -> Effect a) -> m a
 withLocalStorage f = liftEffect do
@@ -83,4 +87,10 @@ instance monadStorageFavoriteSalesApp :: MonadStorage FavoriteSales App where
           >>= decodeJSON
           >>> runExcept
           >>> hush
-            # fromMaybe Favorites.empty
+            # fromMaybe FavoriteSales.empty
+
+
+instance monadTimeApp :: MonadTime App where
+  now = liftEffect $ map toDateTime $ JSDate.parse "Tue Sep 27 2016 17:09:07 GMT+0900 (JST)"
+    where
+      toDateTime = unsafePartial $ fromJust <<< JSDate.toDateTime

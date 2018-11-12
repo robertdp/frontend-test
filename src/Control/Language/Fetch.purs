@@ -1,11 +1,15 @@
 module Control.Language.Fetch where
 
 import Prelude
+
 import Data.Either (Either)
+import Foreign.Class (class Decode)
 
 
-class Monad r <= MonadFetch a b r | b -> a where
-  fetch :: a -> r (Either FetchError b)
+class Monad r <= MonadFetch r where
+  fetch :: forall a. Decode a => String -> r (FetchResult a)
+
+type FetchResult = Either FetchError
 
 data FetchError
   = NotFound
