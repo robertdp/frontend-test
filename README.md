@@ -14,7 +14,7 @@ Module | Description
 `Main` | Bootstraps the React app with a `Config`
 `Component.*` | The React components
 `Control.Language.*` | DSL definitions for the different effectful domains used
-`Control.App` | Implenentation of the DSLs for the current app (different implementations can be used for testing, client-/server-side implementations etc.)
+`Control.App` | Implementation of the DSLs for the current app (different implementations can be used for testing, client-/server-side implementations etc.)
 `Data.*` | Custom data types
 `Logic.*` | Business logic written in the DSLs. Not tied to any implementation.
 
