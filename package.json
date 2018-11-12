@@ -8,7 +8,7 @@
     "postinstall": "rm -Rf .psc-package && $(yarn bin)/psc-package install",
     "clean": "rm -Rf .pulp-cache dist output dce-output",
     "pscid:build": "$(yarn bin)/pulp build",
-    "build": "yarn clean && $(yarn bin)/pulp build -- --codegen corefn && zephyr --dce-foreign Main.main && $(yarn bin)/parcel build index.html --public-url /dist/",
+    "build": "yarn clean && $(yarn bin)/pulp build -- --codegen corefn && zephyr --dce-foreign Main.main && $(yarn bin)/parcel build index.html --public-url /frontend-test/dist/",
     "serve": "$(yarn bin)/pulp --watch build & $(yarn bin)/parcel index.html --open",
     "id": "$(yarn bin)/pscid",
     "test": "$(yarn bin)/pulp test"

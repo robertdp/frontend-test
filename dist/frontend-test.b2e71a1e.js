@@ -375,4 +375,4 @@ var e=require("process");exports._ajax=function(){var r={};return"undefined"==ty
 },{"../Component.SaleContainer/index.js":"WF/K","../Control.App/index.js":"0mFF","../Control.Bind/index.js":"BS3t","../Data.Function/index.js":"nWsl","../Data.Maybe/index.js":"4TeC","../Effect/index.js":"rrF9","../Effect.Exception/index.js":"UHUb","../React.Basic/index.js":"PRa7","../React.Basic.DOM/index.js":"t/El","../Web.DOM.NonElementParentNode/index.js":"cgXI","../Web.HTML/index.js":"Ff9S","../Web.HTML.HTMLDocument/index.js":"ogZw","../Web.HTML.Window/index.js":"b0tF"}],"Focm":[function(require,module,exports) {
 require("./dce-output/Main").main();
 },{"./dce-output/Main":"GCDJ"}]},{},["Focm"], null)
-//# sourceMappingURL=/dist/frontend-test.b2e71a1e.map
+//# sourceMappingURL=/frontend-test/dist/frontend-test.b2e71a1e.map
