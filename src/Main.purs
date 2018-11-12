@@ -2,7 +2,7 @@ module Main where
 
 import Prelude
 
-import App as App
+import Component.SaleContainer as SaleContainer
 import Control.App (Config(..))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
@@ -25,5 +25,5 @@ main = do
   case container of
     Nothing -> throw "Container element not found."
     Just c  ->
-      let app = React.element App.component { config }
+      let app = React.element SaleContainer.component { config }
       in DOM.render app c
