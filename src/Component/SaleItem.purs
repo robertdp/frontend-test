@@ -2,10 +2,16 @@ module Component.SaleItem where
 
 import Prelude hiding (div)
 
-import Data.Maybe (fromMaybe)
+import Data.DateTime (DateTime)
+import Data.Either (fromRight)
+import Data.Formatter.DateTime (formatDateTime)
+import Data.JSDate as JSDate
+import Data.Maybe (fromJust, fromMaybe)
 import Data.Sale (Sale(..), SaleID)
 import Data.Sale as Sale
 import Effect (Effect)
+import Effect.Unsafe (unsafePerformEffect)
+import Partial.Unsafe (unsafePartial)
 import React.Basic as React
 import React.Basic.DOM (button, css, div, i, p, span, text)
 import React.Basic.Events as Events
@@ -40,7 +46,11 @@ component = React.stateless { displayName: "SaleItem", render }
               [ div
                 { className: "mb-8"
                 , children:
-                  [ div
+                  [ p
+                    { className: "text-sm text-grey-dark flex items-center"
+                    , children: [ text $ "Ends at " <> formatTime sale.lifetime.ends_at <> " on " <> formatDate sale.lifetime.ends_at ]
+                    }
+                  , div
                     { className: "text-black font-bold text-xl mb-2"
                     , children: [ text sale.name ]
                     }
@@ -79,3 +89,18 @@ component = React.stateless { displayName: "SaleItem", render }
           ]
         }
 
+unsafeToDateTime :: String -> DateTime
+unsafeToDateTime =
+  unsafePartial $ fromJust <<< JSDate.toDateTime <<< unsafePerformEffect <<< JSDate.parse
+
+unsafeFormatDateTime :: String -> DateTime -> String
+unsafeFormatDateTime pattern datetime =
+  unsafePartial $ fromRight $ formatDateTime pattern datetime
+
+formatDate :: String -> String
+formatDate =
+    unsafeFormatDateTime "MMMM D, YYYY" <<< unsafeToDateTime
+
+formatTime :: String -> String
+formatTime =
+    unsafeFormatDateTime "hh:mm a" <<< unsafeToDateTime

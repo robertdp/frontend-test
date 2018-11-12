@@ -40,6 +40,8 @@ newtype SaleImage = SaleImage (Map String { ratios :: Array Number })
 derive instance genericSaleImage :: Generic SaleImage _
 derive instance newtypeSaleImage :: Newtype SaleImage _
 
+-- | This essentially exists because the JSON is using objects as maps, so here
+-- | is a basic JSON to Map decoder
 instance decodeSaleImage :: Decode SaleImage where
   decode a = do
     fields <- Foreign.keys a
@@ -65,11 +67,10 @@ instance decodeSale :: Decode Sale where
 
 newtype SaleID = SaleID String
 
-derive newtype instance eqSaleID :: Eq SaleID
-derive newtype instance ordSaleID :: Ord SaleID
-
 derive instance genericSaleID :: Generic SaleID _
 derive instance newtypeSaleID :: Newtype SaleID _
+derive newtype instance eqSaleID :: Eq SaleID
+derive newtype instance ordSaleID :: Ord SaleID
 
 instance decodeSaleID :: Decode SaleID where
   decode = genericDecode $ defaultOptions { unwrapSingleConstructors = true }
