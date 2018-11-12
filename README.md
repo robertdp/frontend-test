@@ -17,5 +17,3 @@ Module | Description
 `Control.App` | Implenentation of the DSLs for the current app (different implementations can be used for testing, client-/server-side implementations etc.)
 `Data.*` | Custom data types
 `Logic.*` | Business logic written in the DSLs. Not tied to any implementation.
-
-I'm least happy with the way I'm using Tailwind. This was my first time using it, and I made the mistake of first copying code from the examples. Much debugging later, I figured out that it's better to build it up bit-by-bit.
