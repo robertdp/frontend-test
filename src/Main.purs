@@ -16,7 +16,7 @@ import Web.HTML.Window as Window
 
 
 config :: Config
-config = Config { baseURL: "/data" }
+config = Config { baseURL: "../data" }
 
 main :: Effect Unit
 main = do

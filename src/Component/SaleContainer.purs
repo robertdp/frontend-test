@@ -77,9 +77,12 @@ component = React.component { displayName: "SaleContainer", initialState, receiv
                       map renderSale sales'
                 _ ->
                   [ p
-                    { className: "w-full"
+                    { className: "w-full flex"
                     , children:
-                      [ text "An unexpected error has occured. Please try reloading the page."
+                      [ span
+                        { className: "mx-auto text-grey"
+                        , children: [ text "An unexpected error has occured. Please try reloading the page." ]
+                        }
                       ]
                     }
                   ]
