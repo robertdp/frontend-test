@@ -9,7 +9,7 @@ import Control.Language.Fetch (FetchError)
 import Data.Array as Array
 import Data.FavoriteSales (FavoriteSales)
 import Data.FavoriteSales as FavoriteSales
-import Data.Foldable (for_)
+import Data.Foldable (traverse_)
 import Data.Sale (Sale(..), SaleID)
 import Effect (Effect)
 import Effect.Class (liftEffect)
@@ -26,8 +26,7 @@ component :: React.Component { config :: Config }
 component = React.createComponent "SaleContainer"
 
 data Action
-  = DidMount
-  | UpdateFavorites FavoriteSales
+  = UpdateFavorites FavoriteSales
   | UpdateSales (RemoteData FetchError (Array Sale))
   | ToggleFavorite SaleID
   | ToggleFilter
@@ -45,23 +44,18 @@ saleContainer = React.make component { initialState, didMount, update, render }
       , filter: AllSales
       }
 
-    didMount self = React.send self DidMount
+    didMount self = do
+      React.send self $ UpdateSales RemoteData.Loading
+      traverse_ (App.run self.props.config)
+        [ do
+            favorites <- Favorites.getFavorites
+            liftEffect $ React.send self $ UpdateFavorites favorites
+        , do
+            sales <- RemoteData.fromEither <$> Sales.fetchActiveSales
+            liftEffect $ React.send self $ UpdateSales sales
+        ]
 
     update self = case _ of
-      DidMount ->
-        UpdateAndSideEffects
-          (self.state { sales = RemoteData.Loading })
-          (\self' -> App.run self'.props.config
-            # for_
-              [ do
-                  favorites <- Favorites.getFavorites
-                  liftEffect $ React.send self' $ UpdateFavorites favorites
-              , do
-                sales <- RemoteData.fromEither <$> Sales.fetchActiveSales
-                liftEffect $ React.send self' $ UpdateSales sales
-              ]
-          )
-
       ToggleFilter ->
         Update $ self.state
           { filter = case self.state.filter of
@@ -70,11 +64,11 @@ saleContainer = React.make component { initialState, didMount, update, render }
           }
 
       ToggleFavorite id ->
-          SideEffects \self' -> App.run self'.props.config do
-            favs <- if FavoriteSales.member id self'.state.favorites
-              then Favorites.removeFavorite id self'.state.favorites
-              else Favorites.addFavorite id self'.state.favorites
-            liftEffect $ React.send self' $ UpdateFavorites favs
+        SideEffects \s -> App.run s.props.config do
+          favs <- if FavoriteSales.member id s.state.favorites
+            then Favorites.removeFavorite id s.state.favorites
+            else Favorites.addFavorite id s.state.favorites
+          liftEffect $ React.send s $ UpdateFavorites favs
 
       UpdateFavorites favs ->
         Update $ self.state { favorites = favs }
