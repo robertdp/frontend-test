@@ -7,7 +7,9 @@ import Control.App (Config)
 import Control.App as App
 import Control.Language.Fetch (FetchError)
 import Data.Array as Array
+import Data.FavoriteSales (FavoriteSales)
 import Data.FavoriteSales as FavoriteSales
+import Data.Foldable (for_)
 import Data.Sale (Sale(..), SaleID)
 import Effect (Effect)
 import Effect.Class (liftEffect)
@@ -15,17 +17,27 @@ import Logic.Favorites as Favorites
 import Logic.Sales as Sales
 import Network.RemoteData (RemoteData(..))
 import Network.RemoteData as RemoteData
+import React.Basic (StateUpdate(..))
 import React.Basic as React
 import React.Basic.DOM (div, form, i, input, label, p, span, span_, text)
-import React.Basic.Events as Events
 
+
+component :: React.Component { config :: Config }
+component = React.createComponent "SaleContainer"
+
+data Action
+  = DidMount
+  | UpdateFavorites FavoriteSales
+  | UpdateSales (RemoteData FetchError (Array Sale))
+  | ToggleFavorite SaleID
+  | ToggleFilter
 
 data SaleFilter
   = AllSales
   | OnlyFavorites
 
-component :: React.Component { config :: Config }
-component = React.component { displayName: "SaleContainer", initialState, receiveProps, render }
+saleContainer :: { config :: Config } -> React.JSX
+saleContainer = React.make component { initialState, didMount, update, render }
   where
     initialState =
       { sales: RemoteData.NotAsked :: RemoteData FetchError (Array Sale)
@@ -33,23 +45,50 @@ component = React.component { displayName: "SaleContainer", initialState, receiv
       , filter: AllSales
       }
 
-    -- this is to avoid infinite loops. see https://github.com/lumihq/purescript-react-basic/issues/52
-    receiveProps { isFirstMount: false} = pure unit
-    receiveProps { props, setState } = do
-      App.run props.config do
-        favorites <- Favorites.getFavorites
-        liftEffect $ setState _ { favorites = favorites }
-      App.run props.config do
-        liftEffect $ setState _ { sales = RemoteData.Loading }
-        salesResponse <- Sales.fetchActiveSales <#> RemoteData.fromEither
-        liftEffect $ setState _ { sales = salesResponse }
+    didMount self = React.send self DidMount
 
-    render { props, state, setState } =
+    update self = case _ of
+      DidMount ->
+        UpdateAndSideEffects
+          (self.state { sales = RemoteData.Loading })
+          (\self' -> App.run self'.props.config
+            # for_
+              [ do
+                  favorites <- Favorites.getFavorites
+                  liftEffect $ React.send self' $ UpdateFavorites favorites
+              , do
+                sales <- RemoteData.fromEither <$> Sales.fetchActiveSales
+                liftEffect $ React.send self' $ UpdateSales sales
+              ]
+          )
+
+      ToggleFilter ->
+        Update $ self.state
+          { filter = case self.state.filter of
+              AllSales -> OnlyFavorites
+              OnlyFavorites -> AllSales
+          }
+
+      ToggleFavorite id ->
+          SideEffects \self' -> App.run self'.props.config do
+            favs <- if FavoriteSales.member id self'.state.favorites
+              then Favorites.removeFavorite id self'.state.favorites
+              else Favorites.addFavorite id self'.state.favorites
+            liftEffect $ React.send self' $ UpdateFavorites favs
+
+      UpdateFavorites favs ->
+        Update $ self.state { favorites = favs }
+
+      UpdateSales sales ->
+        Update $ self.state { sales = sales }
+
+
+    render self =
       div
         { className: "container mx-auto max-w-lg flex flex-wrap justify-center m-10"
         , children:
           append [ renderFilter ]
-            $ case state.sales of
+            $ case self.state.sales of
                 Loading ->
                   [ p
                     { className: "w-full flex"
@@ -98,7 +137,7 @@ component = React.component { displayName: "SaleContainer", initialState, receiv
                     [ input
                       { className: "mr-2"
                       , "type": "checkbox"
-                      , onClick: Events.handler_ $ setState \s -> s { filter = switchFilter s.filter }
+                      , onClick: React.capture_ self ToggleFilter
                       }
                     , span_ [ text "Show only favorited sales"]
                     ]
@@ -106,32 +145,14 @@ component = React.component { displayName: "SaleContainer", initialState, receiv
                 ]
               }
 
-          switchFilter = case _ of
-              AllSales -> OnlyFavorites
-              OnlyFavorites -> AllSales
-
-          filterSales = case state.filter of
+          filterSales = case self.state.filter of
               AllSales -> identity
               OnlyFavorites -> Array.filter (\(Sale sale) -> isFavorite sale.id)
 
-          renderSale sale = React.element SaleItem.component saleProps
-            where
-              saleProps =
-                { sale
-                , isFavorite
-                , addFavorite
-                , removeFavorite
-                }
+          renderSale sale = SaleItem.saleItem { sale, isFavorite, toggleFavorite }
 
-          addFavorite :: SaleID -> Effect Unit
-          addFavorite id = App.run props.config do
-            favs <- Favorites.addFavorite id state.favorites
-            liftEffect $ setState _ { favorites = favs}
-
-          removeFavorite :: SaleID -> Effect Unit
-          removeFavorite id = App.run props.config do
-            favs <- Favorites.removeFavorite id state.favorites
-            liftEffect $ setState _ { favorites = favs}
+          toggleFavorite :: SaleID -> Effect Unit
+          toggleFavorite id = React.send self $ ToggleFavorite id
 
           isFavorite :: SaleID -> Boolean
-          isFavorite id = FavoriteSales.member id state.favorites
+          isFavorite id = FavoriteSales.member id self.state.favorites

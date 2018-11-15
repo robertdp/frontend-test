@@ -7,7 +7,6 @@ import Control.App (Config(..))
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Exception (throw)
-import React.Basic as React
 import React.Basic.DOM as DOM
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
@@ -25,5 +24,5 @@ main = do
   case container of
     Nothing -> throw "Container element not found."
     Just c  ->
-      let app = React.element SaleContainer.component { config }
+      let app = SaleContainer.saleContainer { config }
       in DOM.render app c
