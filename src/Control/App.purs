@@ -53,9 +53,6 @@ instance monadFetchSalesApp :: MonadFetch App where
       StatusCode 200, Right body ->
         handleDecode body
 
-      StatusCode 304, Right body ->
-        handleDecode body
-
       StatusCode 404, _ ->
         Left NotFound
 
